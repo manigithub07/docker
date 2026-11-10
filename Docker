@@ -1,0 +1,101 @@
+ 1
+sudo    snap    install    docker
+2
+sudo   docker    --version
+3
+sudo  groupadd   docker
+4
+sudo usermod -aG docker $(whoami)
+5
+sudo reboot
+6
+docker ps
+-------------------------------------------------------------------------------
+TO PULL NGINX FROM DOCKER
+
+ docker     version
+docker    images
+docker    pull    nginx:latest
+docker    images
+docker   run   --name   test  -d  -p  8080:80   nginx:latest
+Then in the browser: localhost:8080
+docker    ps
+docker    exec   -it   test    /bin/bash
+ls
+exit
+docker      ps
+docker    stop   test
+docker    rm   test
+docker    ps   -a
+-------------------------------------------------------------------------------
+SQL with database
+
+
+ docker   volume   create   mysql-data
+
+docker run  -d   --name   my-mysql -e  MYSQL_ROOT_PASSWORD=root123 -v  mysql-data:/var/lib/mysql -p  3306:3306 mysql:8
+
+docker exec   -it   my-mysql   mysql   -uroot   -proot123
+---------------------------------------------------------------------------------------
+nginx volume
+
+docker     run     -p     8080:80     --name     another_nginx 
+-v   ${PWD}/webpages:/usr/share/nginx/html 
+-d   nginx
+__________________________________________________________________________________________
+
+JAVA
+public class HelloWorld {
+     public static void main(String[] args) {
+          System.out.println (“Hello, World!”);
+     }
+}
+
+FROM  		eclipse-temurin:17-jdk-alpine
+WORKDIR	/app
+COPY		HelloWorld.java      /app
+RUN		javac   HelloWorld.java
+CMD		["java", "HelloWorld"]
+
+docker-compose.yml
+
+services:
+  java-helloworld:
+    build:
+    container_name: java-helloworld-container
+    command: ["java","HelloWorld"]
+
+docker compose up
+docker compose down
+
+
+docker swarm init
+mkdir   nginx_project
+cd   nginx_project
+echo  "<h1>Welcome to my custom NGINX server</h1>"   > index.html
+sudo   nano  Dockerfile
+FROM   nginx:latest 
+COPY   index.html   /usr/share/nginx/html/index.html
+docker   build   -t   newdelthis/custom-nginx:1.0   .
+docker run   -d   -p   9999:80   newdelthis/custom-nginx:1.0
+Browser: localhost:9999
+docker  login
+docker   push   newdlethis/custom-nginx:1.0
+idocker    swarm   init
+docker   service   create   --name   nginx-service   --replicas   1   -p 9999:80   newdelthis/custom-nginx:1.0
+docker   service   ls
+docker   service   scale   nginx-service=10
+docker   service   ps   nginx-service
+docker   service   scale   nginx-service=2
+docker   service   ps   nginx-service
+
+
+
+
+_________________________________________________________________________________________________
+
+
+
+
+
+
