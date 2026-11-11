@@ -67,6 +67,13 @@ services:
 
 docker compose up
 docker compose down
+______________________________________________________________________________________________
+docker   info
+If it shows Docker Swarm not active: docker  swarm   init
+If it gives multiple interfaces error: 
+  docker   swarm   init   --advertise-addr 192.168.0.151 (Replace this IP with one of the IPs it has shown)
+Swarm: Single-node cluster
+docker   node   ls
 
 
 docker swarm init
@@ -88,6 +95,147 @@ docker   service   scale   nginx-service=10
 docker   service   ps   nginx-service
 docker   service   scale   nginx-service=2
 docker   service   ps   nginx-service
+
+echo  "<h1>Welcome to the updated NGINX server</h1>"   > index.html
+docker   build   -t   newdelthis/custom-nginx:2.0   .
+docker   push   newdelthis/custom-nginx:2.0
+docker   service   update   --image   newdelthis/custom-nginx:2.0 nginx-service
+docker   service   ps   nginx-service
+Browser: localhost:9999
+docker   service   rm   nginx-service
+
+--------------------------------------------------------------------------------------------------------------------
+HTTPD WEB
+docker   run   -dit   --name   web5   -p   7777:80   httpd
+
+On the local machine, create index.html
+<html>
+<body>
+    <h1>Hello from CDAC!</h1>
+</body>
+</html>
+docker  cp  index.html  web5:/usr/local/apache2/htdocs/index.html
+Open browser: localhost:7777
+Modify index.html to have  <h1>Hello from DITISS!</h1>
+docker   cp   index.html   web5:/usr/local/apache2/htdocs/index.html
+Open browser: localhost:7777
+______________________________________________________________________________________________________________________________
+Docker Compose Python-MySQL
+Directory structure
+student-app/
+    app.py
+    requirements.txt
+    Dockerfile
+    docker-compose.yml
+
+
+
+from flask import Flask
+import mysql.connector
+import time
+
+app = Flask(__name__)
+
+def get_db():
+    return mysql.connector.connect(
+        host="db",
+        user="root",
+        password="root123",
+        database="college"
+    )
+
+@app.route("/")
+def students():
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS student (
+            id INT PRIMARY KEY,
+            name VARCHAR(50),
+            marks INT
+        )
+    """)
+
+    cur.executemany(
+        "INSERT IGNORE INTO student VALUES (%s, %s, %s)",
+        [(1, "Amit", 85),
+         (2, "Neha", 90),
+         (3, "Raj", 78)]
+    )
+    conn.commit()
+
+    cur.execute("SELECT * FROM student")
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    html = "<h2>Student Records</h2><table border='1'>"
+    html += "<tr><th>ID</th><th>Name</th><th>Marks</th></tr>"
+
+    for row in rows:
+        html += f"<tr><td>{row[0]}</td><td>{row[1]}</td><td>{row[2]}</td></tr>"
+
+    return html + "</table>"
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
+
+
+flask
+mysql-connector-python
+
+
+
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app.py .
+
+CMD ["python", "app.py"]
+
+
+
+services:
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: college
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot123"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql-data:
+
+Terminal: docker   compose   up    --build    -d
+Browser: http://localhost:5000
+
+Verification
+docker  compose  ps
+docker  network   ls
+docker  compose   logs   app
+__________________________________________________________________________________________________________________________________
+
 
 
 
